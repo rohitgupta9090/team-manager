@@ -17,12 +17,28 @@ export function AuthProvider({ children }) {
       return;
     }
     const res = await apiFetch("/api/me/");
+    const text = await res.text();
     if (!res.ok) {
       setUser(null);
       setLoading(false);
       return;
     }
-    const u = await res.json();
+    let u;
+    try {
+      u = text ? JSON.parse(text) : null;
+    } catch {
+      u = null;
+    }
+    if (!u || typeof u !== "object") {
+      setUser(null);
+      setAccessError(
+        text.trimStart().toLowerCase().startsWith("<!doctype") || text.trimStart().startsWith("<html")
+          ? "Got a web page instead of API JSON — VITE_API_URL must point to your Django backend (https://…), not the React static URL."
+          : "Invalid JSON from /api/me/. Check the backend is deployed and reachable.",
+      );
+      setLoading(false);
+      return;
+    }
     setUser({
       id: u.id,
       email: u.email ?? "",

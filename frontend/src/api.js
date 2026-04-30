@@ -1,8 +1,38 @@
-/** Django REST API base URL (no trailing slash). */
+/** Django REST API base URL (origin only, no trailing slash). */
 export function getApiBase() {
-  const raw = import.meta.env.VITE_API_URL;
-  const base = typeof raw === "string" && raw.trim() ? raw.trim().replace(/\/$/, "") : "http://127.0.0.1:8000";
-  return base;
+  let raw = import.meta.env.VITE_API_URL;
+  if (typeof raw !== "string" || !raw.trim()) {
+    return "http://127.0.0.1:8000";
+  }
+  raw = raw.trim().replace(/\/+$/, "");
+
+  if (/^(postgres(ql)?:|mysql:)/i.test(raw)) {
+    throw new Error(
+      "VITE_API_URL looks like DATABASE_URL (a DB driver URL). Set it to your Django HTTP origin, e.g. https://<your-backend>.up.railway.app — never postgresql://…",
+    );
+  }
+
+  let candidate = raw;
+  if (!/^https?:\/\//i.test(candidate)) {
+    candidate = `https://${candidate.replace(/^\/+/, "")}`;
+  }
+
+  let u;
+  try {
+    u = new URL(candidate);
+  } catch {
+    throw new Error(`Invalid VITE_API_URL (${JSON.stringify(import.meta.env.VITE_API_URL)}). Example: https://your-django.up.railway.app`);
+  }
+
+  const path = u.pathname.replace(/\/$/, "") || "";
+
+  /** Common typo: pasted two Railway hosts as "https://frontend/hostname.up.railway.app". */
+  const strayRailwayHost = path.match(/^\/([a-z0-9.-]+\.railway\.app)$/i);
+  if (strayRailwayHost) {
+    return `https://${strayRailwayHost[1]}`;
+  }
+
+  return u.origin;
 }
 
 const ACCESS_KEY = "team_task_access";

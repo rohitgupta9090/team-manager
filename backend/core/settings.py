@@ -42,7 +42,11 @@ elif DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-
+    _railway_public = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().lower()
+    if _railway_public:
+        ALLOWED_HOSTS.append(_railway_public)
+    if ".railway.app" not in " ".join(ALLOWED_HOSTS).lower() and os.environ.get("RAILWAY_PROJECT_ID"):
+        ALLOWED_HOSTS.append(".railway.app")
 
 
 AUTH_USER_MODEL = "users.User"
