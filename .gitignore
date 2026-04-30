@@ -1,0 +1,25 @@
+# Dependencies & build
+**/node_modules/
+frontend/dist/
+**/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+venv/
+.venv/
+
+# Env & local DB (never commit secrets / sqlite)
+.env
+.env.*
+!.env.example
+*.sqlite3
+
+# Tools / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.log
+frontend/.vite/
