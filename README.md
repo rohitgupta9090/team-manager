@@ -74,15 +74,3 @@ Set **`VITE_API_URL=http://127.0.0.1:8000`** in `frontend/.env` (already the exa
 | `backend/` | Django API + JWT |
 | `supabase/schema.sql` | Legacy/reference only if you use Supabase |
 
----
-
-## Before you submit
-
-- Record a **2–5 minute demo** covering signup/login, roles, creating a project and tasks, assigning a member, status changes, dashboard + overdue.
-- Push to **GitHub** and deploy a **live URL** (Railway is typical: one Postgres + API service + static frontend).
-
----
-
-## Deploy (later)
-
-Railway sketch: Postgres plugin → `DATABASE_URL`; Django service rooted at `backend` with `DJANGO_DEBUG=0`, `SECRET_KEY`, `ALLOWED_HOSTS`, run migrations on deploy (see `backend/Procfile`). Frontend build served separately with `VITE_API_URL` pointing at your deployed API (`https://…`).
