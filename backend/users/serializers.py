@@ -1,8 +1,32 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
+
+
+def _create_local_user(validated_data):
+    """Create user after signup / admin-create; avoids 500 on unique violations and aligns with Django password rules."""
+    password = validated_data.pop("password")
+    user = User(**validated_data)
+    try:
+        validate_password(password, user)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError({"password": list(exc.messages)})
+    user.set_password(password)
+    try:
+        user.save()
+    except IntegrityError:
+        raise serializers.ValidationError(
+            {
+                "email": ["An account with this email or login ID already exists. Try signing in."],
+                "username": ["An account with this email or login ID already exists. Try signing in."],
+            },
+        ) from None
+    return user
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -14,11 +38,7 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ("username", "email", "password", "role")
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        return _create_local_user(validated_data)
 
 
 class AdminCreateUserSerializer(serializers.ModelSerializer):
@@ -33,11 +53,7 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        return _create_local_user(validated_data)
 
 
 class UserBriefSerializer(serializers.ModelSerializer):
